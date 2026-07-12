@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"os"
 
-	"forge-tui/internal/ai"
-	"forge-tui/internal/ui"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	// 1. Initialize the Local AI Engine
-	aiEngine := ai.NewEngine("llama3.1:8b") // Change to "phi3:mini" if low on RAM
+	// Initialize the Local AI Engine (Using the model you just pulled!)
+	aiEngine := NewEngine("llama3.1:8b") 
 
-	// 2. Initialize the UI Model
-	m := ui.NewModel(aiEngine)
+	// Initialize the UI Model
+	m := NewModel(aiEngine)
 
-	// 3. Start the Bubbletea Program
+	// Start the Bubbletea Program
 	p := tea.NewProgram(
 		m,
 		tea.WithAltScreen(),       // Use the full terminal screen
