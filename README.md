@@ -11,11 +11,11 @@ Built with Go, Bubbletea, and Ollama. **Zero API costs. Zero cloud dependencies.
 
 ## Features
 
-- **Gorgeous Dark Mode UI:** Built with the Catppuccin Mocha theme using `lipgloss`.
-- **Real-Time Streaming:** Watch the AI think and type token-by-token directly in your terminal.
-- **100% Private & Free:** Runs entirely on your local machine via Ollama. No API keys required.
-- **Context Cancellation:** Press `Esc` at any time to instantly stop the AI generation.
-- **High Performance:** Built in Go, leveraging Goroutines for non-blocking UI and AI streaming.
+- Gorgeous Dark Mode UI:** Built with the Catppuccin Mocha theme using `lipgloss`.
+- Real-Time Streaming:** Watch the AI think and type token-by-token directly in your terminal.
+- 100% Private & Free:** Runs entirely on your local machine via Ollama. No API keys required.
+- Context Cancellation:** Press `Esc` at any time to instantly stop the AI generation.
+- High Performance:** Built in Go, leveraging Goroutines for non-blocking UI and AI streaming.
 
 ## Quick Start
 
