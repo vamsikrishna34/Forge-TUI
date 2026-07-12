@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
-	"github.com/tmc/langchaingo/llms"
+	"github.com/tmc/langchaingo/agents"
+	"github.com/tmc/langchaingo/chains"
 	"github.com/tmc/langchaingo/llms/ollama"
+	"github.com/tmc/langchaingo/tools"
 )
 
 type AIEngine struct {
@@ -18,7 +21,7 @@ func NewEngine(modelName string) *AIEngine {
 	return &AIEngine{modelName: modelName}
 }
 
-// StreamPrompt connects to local Ollama and streams tokens to the provided channel.
+// StreamPrompt now uses an Agent loop to handle Tool Calling
 func (e *AIEngine) StreamPrompt(ctx context.Context, prompt string, tokenChan chan<- string, doneChan chan<- bool) {
 	defer func() { doneChan <- true }()
 
@@ -33,22 +36,34 @@ func (e *AIEngine) StreamPrompt(ctx context.Context, prompt string, tokenChan ch
 	}
 	e.mu.Unlock()
 
-	systemPrompt := "You are Forge, an elite AI software architect running locally. Be concise, technical, and use markdown for code blocks."
-	fullPrompt := systemPrompt + "\n\nUser Query: " + prompt
-
-	_, err := e.llm.Call(ctx, fullPrompt,
-		llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				tokenChan <- string(chunk)
-				return nil
-			}
-		}),
+	// 1. Setup the Agent with our custom Tools
+	toolsList := GetTools()
+	
+	// We use LangChainGo's built-in Agent executor
+	agent := agents.NewConversationalAgent(e.llm, toolsList)
+	executor := agents.NewExecutor(agent, toolsList, 
+		agents.WithMaxIterations(3), // Prevent infinite loops
 	)
 
-	if err != nil && ctx.Err() == nil {
-		tokenChan <- "\n\n[Error: " + err.Error() + "]"
+	// 2. We need to intercept the chain to stream the final answer
+	// Note: LangChainGo's agent streaming can be complex. 
+	// For this TUI, we will run the agent and stream the final output.
+	
+	// To keep the TUI responsive, we run the agent in the background
+	result, err := chains.Run(ctx, executor, prompt)
+	
+	if err != nil {
+		tokenChan <- fmt.Sprintf("\n\n[Agent Error: %s]", err.Error())
+		return
+	}
+
+	// Stream the final result to the UI
+	for _, char := range result {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			tokenChan <- string(char)
+		}
 	}
 }

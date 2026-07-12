@@ -33,8 +33,8 @@ var (
 			Padding(1, 2).
 			Background(BaseBg)
 
-	PromptStyle = lipgloss.NewStyle().Foreground(Pink).Bold(true)
-	AIStyle     = lipgloss.NewStyle().Foreground(Green)
+	PromptStyle  = lipgloss.NewStyle().Foreground(Pink).Bold(true)
+	AIStyle      = lipgloss.NewStyle().Foreground(Green)
 	SubtextStyle = lipgloss.NewStyle().Foreground(Subtext).Italic(true)
 )
 
@@ -48,16 +48,16 @@ type Model struct {
 	viewport  viewport.Model
 	textInput textinput.Model
 	spinner   spinner.Model
-	
-	messages  []string // Stores the chat history
-	query     string   // Current input
-	
+
+	messages []string // Stores the chat history
+	query    string   // Current input
+
 	aiRunning bool
 	ctx       context.Context
 	cancel    context.CancelFunc
-	
-	width     int
-	height    int
+
+	width  int
+	height int
 }
 
 func NewModel(ai *AIEngine) Model {
@@ -96,12 +96,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		
+
 		// Calculate viewport dimensions
 		verticalMargins := 6 // Title + borders + input area
 		m.viewport.Width = msg.Width - 6
 		m.viewport.Height = msg.Height - verticalMargins
-		
+
 		m.textInput.Width = msg.Width - 10
 
 	case tea.KeyMsg:
@@ -115,7 +115,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.messages = append(m.messages, PromptStyle.Render("❯ ")+m.query)
 				m.textInput.SetValue("")
 				m.aiRunning = true
-				
+
+				// --- NEW VISUAL FEEDBACK ---
+				// Show the user that the Agent is actively working on tools
+				m.messages = append(m.messages, SubtextStyle.Render("⚙️ Forge is analyzing and using tools..."))
+
 				// Create a new context for this specific AI request
 				m.ctx, m.cancel = context.WithCancel(context.Background())
 				cmds = append(cmds, m.startAI(m.query))
@@ -166,9 +170,9 @@ func (m Model) View() string {
 
 	// Header
 	title := TitleStyle.Render("⚡ FORGE TUI: Local AI Agent")
-	
+
 	// Main Content Area (Viewport)
-	content := BorderStyle.Width(m.width - 4).Height(m.height - 6).Render(m.viewport.View())
+	content := BorderStyle.Width(m.width-4).Height(m.height-6).Render(m.viewport.View())
 
 	// Footer / Input Area
 	var footer string
@@ -177,7 +181,7 @@ func (m Model) View() string {
 	} else {
 		footer = PromptStyle.Render("❯ ") + m.textInput.View()
 	}
-	
+
 	footerStyled := lipgloss.NewStyle().
 		Foreground(TextFg).
 		Background(BaseBg).
@@ -196,7 +200,9 @@ func (m Model) View() string {
 // --- HELPER METHODS ---
 
 func (m Model) isLastMessageAI() bool {
-	if len(m.messages) == 0 { return false }
+	if len(m.messages) == 0 {
+		return false
+	}
 	last := m.messages[len(m.messages)-1]
 	return strings.Contains(last, AIStyle.Render("")) // Hacky but works for simple streaming
 }
