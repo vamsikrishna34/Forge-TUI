@@ -1,4 +1,3 @@
-# Forge-TUI
 # Forge TUI
 
 A blazing-fast, 100% local, dark-mode Terminal User Interface (TUI) for interacting with AI. 
